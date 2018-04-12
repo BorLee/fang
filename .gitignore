@@ -1,0 +1,12 @@
+# IntelliJ project files
+.idea
+*.iml
+
+/conf/config.json
+/data/
+/log/*
+/app/captcha/crack_capcha.model-2100.index
+/app/captcha/checkpoint
+/app/captcha/crack_capcha.model-2100.data-00000-of-00001
+/app/captcha/crack_capcha.model-2100.meta
+!/log/default.log
