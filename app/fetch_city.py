@@ -5,9 +5,6 @@ import time
 import function as fc
 from pyquery import PyQuery as pq
 
-all_count = 0
-done_count = 0
-
 
 def do_fetch():
     fc.fetch_page("http://www.fang.com/SoufunFamily.htm", "data/temp/index.html")
@@ -27,6 +24,7 @@ def do_fetch():
 
         if not fc.fetch_page(href, "data/temp/temp.html"):
             continue
+
         cl_page = fc.read_page("data/temp/temp.html", "GBK")
         page_title = cl_page('title').text()
         if page_title.find(city_name) == -1:

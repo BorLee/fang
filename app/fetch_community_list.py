@@ -1,6 +1,7 @@
 import logging
 import conn
 import function as fc
+from multiprocessing import Process
 
 
 def do_fetch_housing(url, city_code, city_name):
@@ -33,10 +34,17 @@ def do_fetch_housing(url, city_code, city_name):
     return True
 
 
+def vprocess():
+
+
 def do_fetch():
     all_city_code = conn.get_all("select city_code,city_name from inf_city where status = 0 and website='房天下'")
     if all_city_code == ():
         return False
+
+    p = Process(target=vprocess, args=(x,))
+    p.start()
+
     for City_code in all_city_code:
         city_code = City_code[0]
         city_name = City_code[1]
