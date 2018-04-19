@@ -7,6 +7,13 @@ from pyquery import PyQuery as pq
 import captcha.tensorflow_cnn as tesorflow
 
 base_path = Path(__file__).parent.parent
+process_part = 1000
+process_num = 16
+
+headers = {
+    "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64)"
+                  " AppleWebKit/537.36 (KHTML, like Gecko) Chrome/64.0.3282.186 Safari/537.36",
+    "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,image/apng,*/*;q=0.8"}
 
 log_path = base_path.joinpath('log/log.log')
 
@@ -22,10 +29,6 @@ logging.getLogger('').addHandler(console)
 def do_verified(v_url):
     logging.info("尝试进行机器验证...")
     img_dir = base_path.joinpath('app/captcha/captcha-image.jpg')
-    headers = {
-        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64)"
-                      " AppleWebKit/537.36 (KHTML, like Gecko) Chrome/64.0.3282.186 Safari/537.36",
-        "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,image/apng,*/*;q=0.8"}
 
     try:
         img = requests.get("http://search.fang.com/captcha-verify/captcha-image", headers=headers, timeout=30)
@@ -76,11 +79,8 @@ def read_page(page_path, encoding):
 
 
 def fetch_page(url, page_path):
-    logging.info(f'抓取URL={url}')
-    headers = {
-        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64)"
-                      " AppleWebKit/537.36 (KHTML, like Gecko) Chrome/64.0.3282.186 Safari/537.36",
-        "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,image/apng,*/*;q=0.8"}
+    # logging.info(f'抓取URL={url}')
+
     try:
         r = requests.get(url, headers=headers, timeout=30)
         v_url = r.url

@@ -4,11 +4,11 @@ import function as fc
 from multiprocessing import Process
 
 
-def do_fetch_housing(url, city_code, city_name):
+def do_fetch_housing(url, city_code, city_name, process_num):
     # 获取小区页面做检测
-    if not fc.fetch_page(url, 'data/temp/temp.html'):
+    if not fc.fetch_page(url, f'data/temp/{process_num}/temp.html'):
         return False
-    page = fc.read_page("data/temp/temp.html", "GBK")
+    page = fc.read_page(f"data/temp/{process_num}/temp.html", "GBK")
 
     page_title = page('title').text()
     if page_title.find(city_name) == -1:
@@ -34,33 +34,59 @@ def do_fetch_housing(url, city_code, city_name):
     return True
 
 
-def vprocess():
-
-
-def do_fetch():
-    all_city_code = conn.get_all("select city_code,city_name from inf_city where status = 0 and website='房天下'")
-    if all_city_code == ():
-        return False
-
-    p = Process(target=vprocess, args=(x,))
-    p.start()
-
-    for City_code in all_city_code:
-        city_code = City_code[0]
+def vprocess(process_num, City):
+    conn.link()
+    for City_code in City:
+        try:
+            city_code = City_code[0]
+        except:
+            continue
         city_name = City_code[1]
         if city_code == 'bj':
             url = 'http://esf.fang.com/housing/'
             # 北京的小区信息不在bj域名下
         else:
             url = 'http://esf.' + city_code + '.fang.com/housing/'
-        do_fetch_housing(url, city_code, city_name)
+        do_fetch_housing(url, city_code, city_name, process_num)
+    conn.close()
+    logging.info(f"进程 {process_num} 结束.")
+
+
+def do_fetch():
+    conn.link()
+    all_city_code = conn.get_all("select city_code,city_name from inf_city where status = 0 and website='房天下'")
+    conn.close()
+    if all_city_code == ():
+        return False
+
+    count_city = len(all_city_code)
+    logging.info(f"总计有 {count_city} 个城市.")
+    if count_city < fc.process_part:
+        process_part = count_city
+    else:
+        process_part = fc.process_part
+
+    process_part = int(process_part/fc.process_num) + 1
+
+    part_community = [[0 for col in range(process_part)] for row in range(int(count_city / process_part)+1)]
+    for i, a_community in enumerate(all_city_code):
+        fpart = int(i / process_part)
+        spart = i - fpart * process_part
+        part_community[fpart][spart] = a_community
+
+    for process_num in range(fpart + 1):
+        logging.info(f"启动进程 {process_num}")
+        p = Process(target=vprocess, args=(process_num, part_community[process_num],))
+        p.start()
+
     return True
 
 
 if __name__ == '__main__':
-    conn.link()
-    for x in range(1, 4):
-        if not do_fetch():
-            break
-    logging.info(f"community_list 抓取完毕,循环抓取了{x}次.")
-    conn.close()
+    # conn.link()
+    # for x in range(1, 4):
+    #     if not do_fetch():
+    #         break
+    do_fetch()
+    # logging.info(f"community_list 抓取完毕,循环抓取了{x}次.")
+    # conn.close()
