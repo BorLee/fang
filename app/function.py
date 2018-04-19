@@ -7,8 +7,7 @@ from pyquery import PyQuery as pq
 import captcha.tensorflow_cnn as tesorflow
 
 base_path = Path(__file__).parent.parent
-process_part = 5
-process_num = 16
+process_max_num = 8
 log_path = base_path.joinpath('log/log.log')
 headers = {
     "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64)"
@@ -57,7 +56,7 @@ def set_dir(path):
 
 
 def get_all_files(path):
-    return os.listdir(path)
+    return os.listdir(base_path.joinpath(path))
 
 
 def remove_html(context, space=0):
@@ -77,7 +76,7 @@ def read_page(page_path, encoding):
 
 
 def fetch_page(url, page_path):
-    # logging.info(f'抓取URL={url}')
+    logging.info(f'抓取URL={url}')
 
     try:
         r = requests.get(url, headers=headers, timeout=30)

@@ -13,7 +13,7 @@ def do_fetch_housing(url, city_code, city_name, process_num):
 
     page_title = page('title').text()
     if page_title.find(city_name) == -1:
-        logging.warning(f"city_name:{city_name},city_code:{city_code},webtitle != city_name")
+        logging.warning(f"city_name:{city_name},city_code:{city_code},webtitle != city_name,page_title = {page_title}")
         conn.mysql(f"update inf_city set status=8 where city_code='{city_code}'")
         return False
 
@@ -38,6 +38,8 @@ def do_fetch_housing(url, city_code, city_name, process_num):
 def vprocess(process_num, city):
     conn.link()
     for City_code in city:
+        if City_code == 0:
+            continue
         city_code = City_code[0]
         city_name = City_code[1]
         if city_code == 'bj':
@@ -58,33 +60,23 @@ def do_fetch():
         return False
 
     count_city = len(all_city_code)
-    logging.info(f"总计有 {count_city} 个城市.")
 
-    process_part = fc.process_part
-    process_num = math.ceil(count_city / process_part)
-    if process_num > fc.process_num:
-        process_part = math.ceil(count_city / fc.process_num)
-        process_num = fc.process_num
+    process_part = math.ceil(count_city / fc.process_max_num)
+    process_num = fc.process_max_num
+    if count_city < process_num:
+        process_num = count_city
 
     part_community = [[0 for col in range(process_part)] for row in range(process_num)]
     for i, a_community in enumerate(all_city_code):
-        fpart = int(i / process_part)
-        spart = i - fpart * process_part
-        part_community[fpart][spart] = a_community
+        fpart = int(i / process_num)
+        spart = i - fpart * process_num
+        part_community[spart][fpart] = a_community
 
-    for _process_num in range(fpart + 1):
+    for _process_num in range(process_num):
         logging.info(f"启动进程 {_process_num}")
-        p = Process(target=vprocess, args=(process_num, part_community[_process_num],))
+        p = Process(target=vprocess, args=(_process_num, part_community[_process_num],))
         p.start()
-
-    return True
 
 
 if __name__ == '__main__':
-    # conn.link()
-    # for x in range(1, 4):
-    #     if not do_fetch():
-    #         break
     do_fetch()
-    # logging.info(f"community_list 抓取完毕,循环抓取了{x}次.")
-    # conn.close()

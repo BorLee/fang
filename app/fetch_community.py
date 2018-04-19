@@ -1,6 +1,8 @@
 import logging
 import conn
 import function as fc
+import math
+from multiprocessing import Process
 
 
 def get_detail_url(city_code, community_code):
@@ -42,23 +44,47 @@ def do_fetch_community(url, city_code, community_code):
     return True
 
 
-def do_fetch():
-    all_community = conn.get_all("select url,city_code,community_code,id from inf_community"
-                                 " where status = 0 and website='房天下'")
-    if all_community == ():
-        return False
+def vprocess(process_num, all_community):
+    conn.link()
     for Community in all_community:
+        if Community == 0:
+            continue
         if not do_fetch_community(Community[0], Community[1], Community[2]):
             logging.warning(f"抓取小区详细页面失败.小区ID={Community[2]}")
             continue
         sql = f"update inf_community set status = 1 where id={Community[3]} and website='房天下'"
         conn.mysql(sql)
+    conn.close()
+    logging.info(f"进程 {process_num} 结束.")
+
+
+def do_fetch():
+    conn.link()
+    all_community = conn.get_all("select url,city_code,community_code,id from inf_community"
+                                 " where status = 0 and website='房天下'")
+    conn.close()
+    if all_community == ():
+        return False
+
+    count_city = len(all_community)
+
+    process_part = math.ceil(count_city / fc.process_max_num)
+    process_num = fc.process_max_num
+    if count_city < process_num:
+        process_num = count_city
+
+    part_community = [[0 for col in range(process_part)] for row in range(process_num)]
+    for i, a_community in enumerate(all_community):
+        fpart = int(i / process_num)
+        spart = i - fpart * process_num
+        part_community[spart][fpart] = a_community
+
+    for _process_num in range(process_num):
+        logging.info(f"启动进程 {_process_num}")
+        p = Process(target=vprocess, args=(_process_num, part_community[_process_num],))
+        p.start()
 
 
 if __name__ == '__main__':
-    conn.link()
-    for x in range(1, 4):
-        if not do_fetch():
-            break
-    logging.info("community 抓取完毕.")
-    conn.close()
+    do_fetch()
+

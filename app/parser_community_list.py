@@ -5,11 +5,15 @@ import time
 from pathlib import Path
 import function as fc
 from pyquery import PyQuery as pq
+import math
+from multiprocessing import Process
 
 
-def do_parser():
-    all_city_code = conn.get_all("select city_code from inf_city where status = 1 and website='房天下'")
-    for City_code in all_city_code:
+def vprocess(process_num, city):
+    conn.link()
+    for City_code in city:
+        if City_code == 0:
+            continue
         city_code = City_code[0]
         # 获取城市索引下面所有分页
         files = fc.get_all_files(f'data/city/{city_code}/index')
@@ -109,10 +113,36 @@ def do_parser():
                           f"{community_leasing},'{community_build_time}','{community_price}')"
                     conn.mysql(sql)
         conn.mysql(f"update inf_city set status = 2 where city_code = '{city_code}' and website='房天下'")
+    conn.close()
+    logging.info(f"进程 {process_num} 结束.")
+
+
+def do_parser():
+    conn.link()
+    all_city_code = conn.get_all("select city_code from inf_city where status = 1 and website='房天下'")
+    conn.close()
+    if all_city_code == ():
+        return False
+
+    count_city = len(all_city_code)
+
+    process_part = math.ceil(count_city / fc.process_max_num)
+    process_num = fc.process_max_num
+    if count_city < process_num:
+        process_num = count_city
+
+    part_community = [[0 for col in range(process_part)] for row in range(process_num)]
+    for i, a_community in enumerate(all_city_code):
+        fpart = int(i / process_num)
+        spart = i - fpart * process_num
+        part_community[spart][fpart] = a_community
+
+    for _process_num in range(process_num):
+        logging.info(f"启动进程 {_process_num}")
+        p = Process(target=vprocess, args=(_process_num, part_community[_process_num],))
+        p.start()
 
 
 if __name__ == '__main__':
-    conn.link()
     do_parser()
-    logging.info("community_list 解析完毕.")
-    conn.close()
+

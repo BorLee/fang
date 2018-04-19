@@ -1,10 +1,3 @@
-### todo
-1. 多进程下验证码问题
-2. logging 区分进程
-3. parser_community_list 、 fetch_community 多进程
-4. parser_community
-5. install
-
 ### file
 + fetch_city:抓取城市信息存到inf_city表
 + fetch_community_list:抓取小区列表页面到本地
