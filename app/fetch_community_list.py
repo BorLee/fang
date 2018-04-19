@@ -61,9 +61,10 @@ def do_fetch():
     logging.info(f"总计有 {count_city} 个城市.")
 
     process_part = fc.process_part
+    process_num = math.ceil(count_city / process_part)
     if process_num > fc.process_num:
         process_part = math.ceil(count_city / fc.process_num)
-    process_num = math.ceil(count_city / process_part)
+        process_num = fc.process_num
 
     part_community = [[0 for col in range(process_part)] for row in range(process_num)]
     for i, a_community in enumerate(all_city_code):
