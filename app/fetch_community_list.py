@@ -1,6 +1,7 @@
 import logging
 import conn
 import function as fc
+import math
 from multiprocessing import Process
 
 
@@ -34,13 +35,10 @@ def do_fetch_housing(url, city_code, city_name, process_num):
     return True
 
 
-def vprocess(process_num, City):
+def vprocess(process_num, city):
     conn.link()
-    for City_code in City:
-        try:
-            city_code = City_code[0]
-        except:
-            continue
+    for City_code in city:
+        city_code = City_code[0]
         city_name = City_code[1]
         if city_code == 'bj':
             url = 'http://esf.fang.com/housing/'
@@ -61,22 +59,21 @@ def do_fetch():
 
     count_city = len(all_city_code)
     logging.info(f"总计有 {count_city} 个城市.")
-    if count_city < fc.process_part:
-        process_part = count_city
-    else:
-        process_part = fc.process_part
 
-    process_part = int(process_part/fc.process_num) + 1
+    process_part = fc.process_part
+    if process_num > fc.process_num:
+        process_part = math.ceil(count_city / fc.process_num)
+    process_num = math.ceil(count_city / process_part)
 
-    part_community = [[0 for col in range(process_part)] for row in range(int(count_city / process_part)+1)]
+    part_community = [[0 for col in range(process_part)] for row in range(process_num)]
     for i, a_community in enumerate(all_city_code):
         fpart = int(i / process_part)
         spart = i - fpart * process_part
         part_community[fpart][spart] = a_community
 
-    for process_num in range(fpart + 1):
-        logging.info(f"启动进程 {process_num}")
-        p = Process(target=vprocess, args=(process_num, part_community[process_num],))
+    for _process_num in range(fpart + 1):
+        logging.info(f"启动进程 {_process_num}")
+        p = Process(target=vprocess, args=(process_num, part_community[_process_num],))
         p.start()
 
     return True

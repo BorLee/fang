@@ -7,15 +7,13 @@ from pyquery import PyQuery as pq
 import captcha.tensorflow_cnn as tesorflow
 
 base_path = Path(__file__).parent.parent
-process_part = 1000
+process_part = 5
 process_num = 16
-
+log_path = base_path.joinpath('log/log.log')
 headers = {
     "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64)"
                   " AppleWebKit/537.36 (KHTML, like Gecko) Chrome/64.0.3282.186 Safari/537.36",
     "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,image/apng,*/*;q=0.8"}
-
-log_path = base_path.joinpath('log/log.log')
 
 log_format = '%(asctime)s %(name)s[%(module)s] %(levelname)s: %(message)s'
 logging.basicConfig(filename=log_path, format=log_format, level=logging.INFO)
