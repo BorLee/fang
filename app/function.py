@@ -7,7 +7,7 @@ from pyquery import PyQuery as pq
 import captcha.tensorflow_cnn as tesorflow
 
 base_path = Path(__file__).parent.parent
-process_max_num = 8
+process_max_num = 1
 log_path = base_path.joinpath('log/log.log')
 headers = {
     "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64)"

@@ -4,6 +4,8 @@ import function as fc
 import math
 from multiprocessing import Process
 
+# todo: 有部分城市小区列表里链接的是另一个城市的小区，比如廊坊第一页里有个荣盛阿尔卡迪亚永清花语城，链接是北京的。
+
 
 def get_detail_url(city_code, community_code):
     community_page_path = f'data/city/{city_code}/community/{community_code}.html'
@@ -17,16 +19,30 @@ def get_detail_url(city_code, community_code):
             return False
 
     detail_url = page('#xqwxqy_C01_17')('div>span>a').attr('href')
+    detail_type = 1
     if detail_url is None:
         # 这是另外一种页面形式
         detail_url = page.find("div[class='floatr']")('a').attr('href')
+        detail_type = 2
         if detail_url is None:
             if page('#esf_fangyuanlist')('div>span>a').text() == "查看全部房源":
-                return "no_detail"
+                detail_type = 3
+            elif page('#fangjiazs')('div').eq(0).text().find("价格走势") != -1:
+                detail_type = 4
             else:
-                logging.warning(f"检测到新的小区页面,小区ID={community_code}")
-                return False
-    return detail_url
+                detail_url = page('#xfptxq_B04_14')('p>a').attr('href')
+                detail_type = 5
+                if detail_url is None:
+                    detail_type = 9
+                    logging.warning(f"检测到新的小区页面,小区ID={community_code}")
+
+    conn.mysql(f"update inf_community set detail_type = {detail_type} where community_code = '{community_code}'")
+    if detail_type in (1, 2, 5):
+        return detail_url
+    elif detail_type in (3, 4):
+        return "no_detail"
+    else:
+        return False
 
 
 def do_fetch_community(url, city_code, community_code):
